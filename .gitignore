@@ -45,3 +45,43 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Visual Studio Code
+.vscode/
+
+# Flutter / Dart
+.flutter-plugins
+.packages
+build/
+
+# Android
+android/app/libs/
+android/app/src/main/assets/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/.gradle
+android/key.properties
+# If you don't want to commit the keystore file (Recommended for security)
+*.jks
+*.keystore
+
+# iOS
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/.generated/
+ios/Pods/
+ios/Podfile.lock
+
+# Firebase (If you use Firebase)
+firebase_options.dart
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
