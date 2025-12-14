@@ -12,6 +12,7 @@ class _DustEngineState extends State<DustEngine>
   late AnimationController _controller;
   final List<DustParticle> _particles = [];
   final Random _random = Random();
+  // Check the current brightness
 
   @override
   void initState() {
@@ -33,10 +34,13 @@ class _DustEngineState extends State<DustEngine>
 
   @override
   Widget build(BuildContext context) {
+    // Check the current brightness
+    final particleColor = Theme.of(context).colorScheme.primary;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) =>
-          CustomPaint(painter: DustPainter(_particles), size: Size.infinite),
+          CustomPaint(painter: DustPainter(_particles, particleColor), size: Size.infinite),
     );
   }
 }
@@ -54,7 +58,9 @@ class DustParticle {
 
 class DustPainter extends CustomPainter {
   final List<DustParticle> particles;
-  DustPainter(this.particles);
+  final Color particleColor;
+
+  DustPainter(this.particles, this.particleColor);
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint();
@@ -65,7 +71,7 @@ class DustPainter extends CustomPainter {
       if (p.x > 1) p.x = 0;
       if (p.y < 0) p.y = 1;
       if (p.y > 1) p.y = 0;
-      paint.color = Colors.indigo.withAlpha((255 * p.opacity).toInt());
+      paint.color = particleColor.withAlpha((255 * p.opacity).toInt());
       canvas.drawCircle(
         Offset(p.x * size.width, p.y * size.height),
         p.size,
