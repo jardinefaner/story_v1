@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'package:story_v1/screens/auth_screen.dart';
 import 'package:story_v1/themes/app_themes.dart';
+import 'package:story_v1/widgets/dust_engine.dart';
 import 'firebase_options.dart';
 
 import 'package:flutter/material.dart';
@@ -22,7 +23,15 @@ class MyApp extends StatelessWidget {
       theme: AppThemes.light,
       darkTheme: AppThemes.dark,
       themeMode: ThemeMode.system,
-      home: const AuthScreen(),
+      home: Scaffold(
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            Positioned.fill(child: const DustEngine()),
+            Positioned.fill(child: AuthScreen()),
+          ],
+        ),
+      ),
     );
   }
 }
