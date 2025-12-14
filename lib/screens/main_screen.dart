@@ -1,5 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
+import 'package:story_v1/widgets/footer.dart';
+import 'package:story_v1/widgets/header.dart';
+import 'package:story_v1/widgets/seamless_waveform.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,65 +21,28 @@ class _MainScreenState extends State<MainScreen> {
       // resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
+          // HEADER
           Positioned(
             top: 32,
             right: 32,
-            child: OutlinedButton(
-              onPressed: () {
-                FirebaseAuth.instance.signOut();
-              },
-              child: const Icon(Icons.logout),
-            ),
+            left: 32,
+            child: const Header(),
           ),
           Positioned(
             bottom: 32,
-            right: 24,
+            right:32, // Adjusts for right
             left: 32,
-            child: Container(
-              decoration: BoxDecoration(
-                color: _eyePressed
-                    ? Theme.of(context).colorScheme.primary.withAlpha(25)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(100),
-                border: Border.all(
-                  width: 1,
-                  color: _eyePressed
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.transparent,
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(32, 8, 8, 8),
-              child: Row(
-                children: [
-                  if (_eyePressed)
-                    Flexible(
-                      child: Form(
-                        child: TextFormField(
-                          decoration: const InputDecoration(
-                            hintText: 'What is up?',
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () {
-                      setState(() => _eyePressed = !_eyePressed);
-                    },
-                    icon: !_eyePressed
-                        ? Icon(
-                            Icons.remove_red_eye_outlined,
-                            size: 48,
-                            color: Theme.of(context).colorScheme.primary,
-                          )
-                        : Icon(Icons.panorama_fish_eye, size: 48),
-                  ),
-                ],
-              ),
-            ),
+            child: const Footer(),
           ),
+          // Positioned(
+          //   right: 0,
+          //   top: 0,
+          //   child: SizedBox(
+          //     width: 32,
+          //     height: double.infinity,
+          //     child: Placeholder(),
+          //   ),
+          // ),
           Center(child: Text('Main Screen')),
         ],
       ),
