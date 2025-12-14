@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 class DustEngine extends StatefulWidget {
@@ -45,12 +44,12 @@ class _DustEngineState extends State<DustEngine>
 class DustParticle {
   double x, y, speedX, speedY, size, opacity;
   DustParticle(Random random)
-      : x = random.nextDouble(),
-        y = random.nextDouble(),
-        speedX = (random.nextDouble() - 0.5) * 0.0005,
-        speedY = (random.nextDouble() - 0.5) * 0.0005,
-        size = random.nextDouble() * 2 + 0.5,
-        opacity = random.nextDouble() * 0.3 + 0.1;
+    : x = random.nextDouble(),
+      y = random.nextDouble(),
+      speedX = (random.nextDouble() - 0.5) * 0.0005,
+      speedY = (random.nextDouble() - 0.5) * 0.0005,
+      size = random.nextDouble() * 2 + 0.5,
+      opacity = random.nextDouble() * 0.3 + 0.1;
 }
 
 class DustPainter extends CustomPainter {
@@ -66,7 +65,7 @@ class DustPainter extends CustomPainter {
       if (p.x > 1) p.x = 0;
       if (p.y < 0) p.y = 1;
       if (p.y > 1) p.y = 0;
-      paint.color = Colors.white.withValues(alpha: p.opacity);
+      paint.color = Colors.indigo.withAlpha((255 * p.opacity).toInt());
       canvas.drawCircle(
         Offset(p.x * size.width, p.y * size.height),
         p.size,
