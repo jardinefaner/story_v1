@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-final _firebase = FirebaseAuth.instance;
-
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -11,130 +9,166 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _form = GlobalKey<FormState>();
-  bool _isLogin = true;
-  String _email = '';
-  String _password = '';
+  final _firebase = FirebaseAuth.instance;
+  final _formKey = GlobalKey<FormState>();
+
+  // Compiled regex for performance
+  static final _passwordRegex = RegExp(
+    r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$',
+  );
+
+  var _isLogin = true;
+  var _isAuthenticating = false;
+  var _obscurePassword = true;
+  var _enteredEmail = '';
+  var _enteredPassword = '';
 
   void _submit() async {
-    final isValid = _form.currentState!.validate();
-
+    final isValid = _formKey.currentState!.validate();
     if (!isValid) return;
 
-    _form.currentState!.save();
+    _formKey.currentState!.save();
+
+    setState(() => _isAuthenticating = true);
+
     try {
       if (_isLogin) {
-        final credentials = await _firebase.signInWithEmailAndPassword(
-          email: _email,
-          password: _password,
+        await _firebase.signInWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
         );
-
       } else {
-        final credentials = await _firebase.createUserWithEmailAndPassword(
-          email: _email,
-          password: _password,
+        await _firebase.createUserWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
         );
       }
     } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message ?? 'Authentication failed.')),
+        SnackBar(
+          content: Text(error.message ?? 'Authentication failed.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
+    } finally {
+      if (mounted) setState(() => _isAuthenticating = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            // Story LOGO
-            Container(
-              margin: const EdgeInsets.only(top: 32),
-              width: 200,
-              height: 200,
-              child: Icon(
-                Icons.remove_red_eye_outlined,
-                size: 160,
-                color: Theme.of(context).colorScheme.primary.withAlpha(225),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // We use Center + SingleChildScrollView to ensure the form
+    // stays in the middle but scrolls if the keyboard covers it.
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // LOGO
+          Icon(
+            Icons.remove_red_eye_outlined,
+            size: 100,
+            // Make sure the logo is visible against the dust background
+            color: colorScheme.primary.withOpacity(0.9),
+          ),
+          const SizedBox(height: 30),
+
+          // FORM CARD
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-            ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // EMAIL
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address',
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.none,
+                        autofillHints: const [AutofillHints.email],
+                        textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          if (value == null || !value.contains('@')) {
+                            return 'Please enter a valid email.';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) => _enteredEmail = value!,
+                      ),
+                      const SizedBox(height: 16),
 
-            // FORM
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _form,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // EMAIL ADDRESS input
-                        TextFormField(
-                          decoration: const InputDecoration(
-                            labelText: 'Email Address',
+                      // PASSWORD
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined),
+                            onPressed: () {
+                              setState(() => _obscurePassword = !_obscurePassword);
+                            },
                           ),
-                          keyboardType: TextInputType.emailAddress,
-                          autocorrect: false,
-                          textCapitalization: TextCapitalization.none,
-                          validator: (value) {
-                            if (value == null ||
-                                value.trim().isEmpty ||
-                                !value.contains('@')) {
-                              return 'Please enter a valid email address.';
-                            }
-
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _email = value!;
-                          },
                         ),
+                        obscureText: _obscurePassword,
+                        autofillHints: const [AutofillHints.password],
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _submit(),
+                        validator: (value) {
+                          if (value == null || value.length < 8) {
+                            return 'Password is too short.';
+                          }
+                          if (!_isLogin && !_passwordRegex.hasMatch(value)) {
+                            return 'Requires Upper, Lower, Number & Symbol.';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) => _enteredPassword = value!,
+                      ),
 
-                        // PASSWORD
-                        TextFormField(
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
+                      const SizedBox(height: 24),
+
+                      // SUBMIT BUTTON
+                      if (_isAuthenticating)
+                        const CircularProgressIndicator()
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: _submit,
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(_isLogin ? 'Login' : 'Sign Up'),
                           ),
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Password is required.';
-                            }
-                            // Regex for minimum 8 characters, at least one uppercase,
-                            // one lowercase, one digit, and one special character.
-                            // You can customize the special characters within the [ ... ] block.
-                            String pattern =
-                                r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
-                            RegExp regex = RegExp(pattern);
-
-                            if (!regex.hasMatch(value)) {
-                              return 'Password must be at least 8 characters and include: uppercase, lowercase, digit, and special character (!@#\$&*~).';
-                            }
-
-                            return null; // The password is valid
-                          },
-                          onSaved: (value) {
-                            _password = value!;
-                          },
                         ),
 
-                        const SizedBox(height: 24),
+                      const SizedBox(height: 12),
 
-                        OutlinedButton(
-                          onPressed: _submit,
-                          child: Text(_isLogin ? 'Login' : 'Sign Up'),
-                        ),
-
+                      // SWITCH MODE
+                      if (!_isAuthenticating)
                         TextButton(
                           onPressed: () {
                             setState(() {
                               _isLogin = !_isLogin;
+                              _formKey.currentState?.reset();
                             });
                           },
                           child: Text(
@@ -143,14 +177,13 @@ class _AuthScreenState extends State<AuthScreen> {
                                 : 'I already have an account',
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
